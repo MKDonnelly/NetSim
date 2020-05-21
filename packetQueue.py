@@ -17,6 +17,7 @@ def packetSize():
 class Packet:
    def __init__(self, startTime):
       self.size = packetSize()
+      print("Packet size is " + str(self.size))
       self.startTime = startTime
 
    def getSize(self):

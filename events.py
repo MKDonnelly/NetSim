@@ -6,28 +6,17 @@ import time
 # is used by wireless clients to determine
 # what needs to happen next
 
-# This event is for when a packet is randomly
-# generated with negative exponential time
-# at the client
+# This event indicates a packet was generated
+# for transmission by the client. These arrive
+# in the network as a whole using the negExp distribution
 EVENT_PKT_GENERATED = 0
 
-# This event is for when the 
-
-
-# Have the client begin sending the packet
+# This event is for when the client begins
+# sending the packet 
 EVENT_SEND_PKT = 0
 
 # Have the client begin sending the ACK
 EVENT_SEND_ACK = 1
-
-# We will use this once we have received
-# a packet from another client and need
-# to wait SIFS time before sending the ACK
-EVENT_WAIT_SIFS = 2
-
-# We will use this once we have sensed the
-# channel is idle and are about to send a packet
-EVENT_WAIT_DIFS = 3
 
 # We use this to unblock the channel that we
 # previously blocked
@@ -87,4 +76,4 @@ class EList:
 
    # Return number of events left
    def eventsLeft(self):
-      return len(self.events) > 0
+      return len(self.events)

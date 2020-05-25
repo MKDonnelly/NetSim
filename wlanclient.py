@@ -152,6 +152,12 @@ class wClient:
          queuingDelay = currentTime - p.getStartTime() 
          transmissionDelay = p.getSize() / WCHAN_RATE
 
+         # Now initialize how long we should wait and then go
+         # into the ack waiting state
+         self.ackReceived = 0
+         self.waitTime = transmissionDelay + SIFS
+         self.state = STATE_WAIT_ACK
+
          # Pick a random peer to send to
          randomClient = random.randint(0, len(self.clientsList)-1)
          # The only thing we give to the other client is our index.
@@ -161,12 +167,6 @@ class wClient:
          # Unblock after transmission
          self.eventList.insert(Event(currentTime + transmissionDelay, \
                                      EVENT_UNBLOCK_CHANNEL))
-
-         # Now initialize how long we should wait and then go
-         # into the ack waiting state
-         self.ackReceived = 0
-         self.waitTime = transmissionDelay + SIFS
-         self.state = STATE_WAIT_ACK
 
       elif self.state == STATE_WAIT_ACK:
          # Wait to receive an ACK.

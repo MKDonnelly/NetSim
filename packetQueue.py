@@ -10,18 +10,20 @@ def packetSize():
    # use for the packet size since it is negatively
    # exponentially distributed. I have just set
    # it to .5 here
-   # TODO: This doesn't work. The packet is not within
-   #       the range 0 to 1544
-   return int(negExp(.5) * 1544)
+   v = int(negExp(.5) * 1544)
+   while v > 1544:
+      v = int(negExp(.5) * 1544)
+   return v
+
 
 class Packet:
    def __init__(self, startTime):
       self.size = packetSize()
-      print("Packet size is " + str(self.size))
       self.startTime = startTime
 
    def getSize(self):
-      return self.size
+      # Return size in bits
+      return self.size * 8
 
    def getStartTime(self):
       return self.startTime
@@ -32,9 +34,13 @@ class PacketQueue:
    def __init__(self):
       self.packets = []
 
-   # Add a packet to the queue
+   # Add a packet to the end of the queue
    def append(self, packet):
       self.packets.append(packet)
+
+   # Add a packet to the start of the queue
+   def push(self, packet):
+      self.packets.insert(0, packet)
 
    # Remove packet from queue
    def pop(self):

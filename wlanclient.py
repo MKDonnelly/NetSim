@@ -13,12 +13,21 @@ def negExp(rate):
    return (-1. / rate) * math.log(1 - random.uniform(0, 1))
 
 def randomBackoff(t):
-   return random.randrange(0, t)
+   return random.randrange(0, pow(2,t))
 
+# A client can be in any one of these states
+# This helps when we are running the simulation
+# to determine what the client needs to do
+STATE_WAIT_DSFS = 0
+STATE_WAIT_SIFS = 1
+STATE_SENDING_PACKET = 2
+STATE_WAIT_FOR_ACK = 3
 
 # A wireless client
 class wClient:
-   def __init__(self, lambdaValue, t, i):
+   # wClients is the array of clients we are using
+   # in the simulation
+   def __init__(self, lambdaValue, t, i, wClients):
       self.clientID = i
       self.lambdaValue = lambdaValue
       self.randomBackoff = t
@@ -52,9 +61,6 @@ class wClient:
       self.sifsCounter = self.sifs
       self.difsCounter = self.difs
 
-      # Generate packet inter arrival times
-      # We will default to 100 packets
-      eventTime = 0
       self.eventList = EList()
 
       # The client will sense the channel every senseDelay time
@@ -65,6 +71,7 @@ class wClient:
 
       self.packetQueue = PacketQueue()
 
+
    # Called by the main loop to insert packet arrival times
    def addEvent(self, event):
       self.eventList.insert(event)
@@ -74,6 +81,7 @@ class wClient:
    # perform any events that need to happen
    # by currentTime
    def updateClient(self, currentTime):
+
       # We know that we can have at most one event in the
       # event list happen when updating the currentTime
       # this is because we select the nearest time
@@ -124,9 +132,12 @@ class wClient:
                # Unblock channel after done sending
                self.eventList.insert(Event(currentTime + transmitDelay, EVENT_UNBLOCK_CHANNEL))
 
-            # We always need to put a new sense channel event so that we can 
-            # check to send another packet
+               # This will let us sense the channel in the future
             self.eventList.insert(Event(currentTime + self.senseDelay, EVENT_SENSE_CHANNEL))
+            # If the channel is busy, we do a random backoff
+            # and don't sense the channel until then
+#            elif channelBusy:
+#               self.eventList.insert(Event(currentTime + randomBackoff(self.randomBackoff), EVENT_SENSE_CHANNEL))
 
          elif firstEvent.getType() == EVENT_UNBLOCK_CHANNEL:
             channelBusy = 0

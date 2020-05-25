@@ -12,7 +12,7 @@ random.seed(time.time())
 ###########################################################
 # 		ALL TIME VALUES ARE IN MS!!!!!!
 # Rate of packet arrival
-lambdaValue = 1
+lambdaValue = .1
 
 # Number of hosts
 nHosts = 10
@@ -25,7 +25,7 @@ eventTime = 0
 wClients = []
 
 for i in range(0, nHosts):
-   wClients.append(wClient(lambdaValue, t, i))
+   wClients.append(wClient(lambdaValue, t, i, wClients))
 
 # According to clarifications on piazza, 
 # lambda is the rate of arrival of a packet
@@ -36,7 +36,7 @@ for i in range(0, nHosts):
 # when this event is processed
 packetArrivalTime = 0
 # I guess we will iterate for 10,000 packets...
-for i in range(0, 10000):
+for i in range(0, 3000):
    # The mean arrival time is negExp(lambda)
    packetArrivalTime += negExp(lambdaValue)
 
@@ -56,7 +56,6 @@ for i in range(0, 10000):
 while clientWantsToSend(wClients):
    # Find nearest time to perform an action
    eventTime = nearestClientTime(wClients)
-#   print("Time: " + str(eventTime))
    updateClients(wClients, eventTime)
 
 # At this point, eventTime will hold the time that the

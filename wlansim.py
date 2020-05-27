@@ -11,13 +11,13 @@ random.seed(time.time())
 ##############     PARAMETERS USED IN SIMULATION   ########
 ###########################################################
 # Rate of packet arrival
-lambdaValue = .1
+lambdaValue = .9
 
 # Number of hosts
 nHosts = 10
 
 # Total packets to send
-totalPackets = 1000
+totalPackets = 10000
 #############################################################
 
 wClients = []
@@ -33,7 +33,6 @@ for i in range(0, nHosts):
 # the packet length is handled by the client
 # when this event is processed
 packetArrivalTime = 0
-# I guess we will iterate for 10,000 packets...
 for i in range(0, totalPackets):
    # The mean arrival time is negExp(lambda)
    packetArrivalTime += negExp(lambdaValue)
@@ -77,6 +76,6 @@ print("Throughput (in bits/second): " + str(round(throughput)))
 
 # According to the assignment, the average network delay
 # is the total delay of all of the hosts divided by
-# the throughput
-totalDelay = sumOfDelay(wClients)
+# the throughput. Divide by 1000 since the delays are in ms
+totalDelay = sumOfDelay(wClients) / 1000
 print("Average delay (in seconds): " + str(totalDelay / totalPackets))

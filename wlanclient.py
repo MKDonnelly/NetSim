@@ -54,16 +54,12 @@ STATE_TRANSMIT = 3
 # after sending a packet in this state
 STATE_WAIT_ACK = 4
 
-# The client will be waiting SIFS before sending 
-# and ACK in this state
-STATE_SIFS_WAIT = 5
-
 # The client will be sending an ACK in this state
-STATE_SEND_ACK = 6
+STATE_SEND_ACK = 5
 
 # The client will be done with all operations in
 # this state
-STATE_DONE = 7
+STATE_DONE = 6
 
 # A wireless client
 class wClient:
@@ -77,6 +73,7 @@ class wClient:
       self.lambdaValue = lambdaValue
       self.clientIndex = clientIndex
       self.clientsList = clientsList
+      self.cCounter = 0
       self.state = STATE_READY
 
       # This will hold events the client need to
@@ -107,7 +104,6 @@ class wClient:
    # perform any events that need to happen
    # by currentTime
    def updateClient(self, currentTime):
-#      print("Client " + str(self.clientIndex) + " state is " + str(self.state))
       global channelBusy
 
       # Handle any events from the event list
@@ -116,7 +112,9 @@ class wClient:
          event = self.eventList.getFirst()
          if event.getType() == EVENT_PKT_ARRIVAL:
             # Generate a new packet and add it to the packet queue
-            self.packetQueue.append(Packet(event.getTime()))
+            self.packetQueue.append(Packet(event.getTime(), self.lambdaValue))
+         elif event.getType() == EVENT_UNBLOCK_CHANNEL:
+            channelBusy = 0
 
 
       if self.state == STATE_READY:
@@ -124,19 +122,20 @@ class wClient:
             self.state = STATE_DIFS_WAIT
          elif channelBusy:
             self.state = STATE_BACKOFF
-            # TODO need to fix this; we need the backoff to
-            #      increase as more colissions happen
-            self.backoffValue = randomBackoff(1)
+            # Keep track of how many colissions we have hit
+            # so we can adjust the backoff function
+            self.cCounter += 1
+            self.backoffValue = randomBackoff(self.cCounter)
 
       elif self.state == STATE_DIFS_WAIT:
          if not channelBusy:
-            self.difs -= .01
+            self.difs -= SENSE_RATE
             if self.difs <= 0:
                self.state = STATE_TRANSMIT
 
       elif self.state == STATE_BACKOFF:
          if not channelBusy:
-            self.backoffValue -= .01
+            self.backoffValue -= SENSE_RATE
             if self.backoffValue <= 0:
                self.state = STATE_READY
 
@@ -152,65 +151,84 @@ class wClient:
          queuingDelay = currentTime - p.getStartTime() 
          transmissionDelay = p.getSize() / WCHAN_RATE
 
-         # Now initialize how long we should wait and then go
-         # into the ack waiting state
-         self.ackReceived = 0
+         # Update Counters
+         self.dataCounter += p.getSize()
+         self.delayCounter += queuingDelay + transmissionDelay
+
+         # Now initialize how long we should wait and set
+         # our next state as WAIT_ACK.
          self.waitTime = transmissionDelay + SIFS
          self.state = STATE_WAIT_ACK
+         # We need this in case of a timeout; when
+         # a timeout happens, we re-send the packet
+         self.sentPacket = p
 
          # Pick a random peer to send to
          randomClient = random.randint(0, len(self.clientsList)-1)
+         # Keep trying to get a random client that isn't ourself
+         while randomClient == self.clientIndex:
+            randomClient = random.randint(0, len(self.clientsList)-1)
+
          # The only thing we give to the other client is our index.
          # This will let us unblock when it sends an ACK to us
-         self.clientsList[0].givePacket(1)
+         self.clientsList[randomClient].givePacket(self.clientIndex)
 
          # Unblock after transmission
          self.eventList.insert(Event(currentTime + transmissionDelay, \
                                      EVENT_UNBLOCK_CHANNEL))
+
+         # Reset colission counter to 0
+         self.cCounter = 0
 
       elif self.state == STATE_WAIT_ACK:
          # Wait to receive an ACK.
          # If we do, our state will automatically be
          # changed to STATE_READY, so this only handles
          # the case when we timeout
-         if self.ackReceived:
-            print("Got ACK!")
-            self.state = STATE_DONE
-
-         self.waitTime -= .01
+         self.waitTime -= SENSE_RATE
          if self.waitTime <= 0:
-            # Timeout, for now just print that this happened
-            print("Client " + str(self.clientIndex) + " in state " + str(self.state))
-            print("Timeout!!!")
-            self.state = STATE_DONE
-
-      elif self.state == STATE_SIFS_WAIT:
-         self.state = STATE_SEND_ACK
+            # Timeout, push the packet to the start of the packet
+            # queue and go into the READY state to re-send the packet
+            print("Timeout on client " + str(self.clientIndex) + "!!!")
+#            self.packetQueue.push(self.sentPacket)
+            self.state = STATE_READY
 
       elif self.state == STATE_SEND_ACK:
-         pass
- 
+         if not channelBusy:
+            self.sifs -= SENSE_RATE
+            if self.sifs <= 0:
+               # Send ACK to client
+               self.clientsList[self.ackClient].acceptACK()
+               self.state = STATE_READY
 
+      # The client has nothing left to do if there
+      # are no packets in the queue, not events left
+      # in the event list, and if it in the READY state
       if self.packetQueue.size() == 0 and \
            self.eventList.eventsLeft() == 0 and \
-           self.state != STATE_WAIT_ACK and \
-           self.state != STATE_SIFS_WAIT:
+           self.state == STATE_READY:
          self.state = STATE_DONE
  
   
-   # Let's call this client A and the one we just sent a packet to B.
-   # Once B has received the packet, it will send an ACK back to A.
-   # To do that, B calls this method on A
+   # Once we send a packet to another host, we need a way of
+   # receiving an ACK packet. To do this, the other host calls
+   # this method
    def acceptACK(self):
-      print("Client " + str(self.clientIndex) + " accepted ack")
-      self.ackReceived = 1
+      # Once we receive an ACK, we enter the STATE_READY state.
+      self.state = STATE_READY
 
    # This is called when we send a packet from one client to another
    # We provide the other client the index of the sending client in
    # the array so that this client can send back an ACK
    def givePacket(self, i):
-      print("Client " + str(self.clientIndex) + " accepted packet from " + str(i))
-      self.clientsList[1].acceptACK()
+      # Set timeout for SIFS
+      self.sifs = SIFS
+
+      # Move into the state where we send the ACK
+      self.state = STATE_SEND_ACK
+
+      # Make sure we know which client to ACK when the time comes
+      self.ackClient = i
 
    # A client will want to send packets if there
    # are any events in the event list other than

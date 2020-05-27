@@ -5,20 +5,20 @@ import time
 def negExp(rate):
    return (-1. / rate) * math.log(1 - random.uniform(0, 1))
 
-def packetSize():
+def packetSize(lambdaValue):
    # The assignment did not specify the lambda term to 
    # use for the packet size since it is negatively
    # exponentially distributed. I have just set
    # it to .5 here
-   v = int(negExp(.5) * 1544)
+   v = int(negExp(lambdaValue) * 1544)
    while v > 1544:
-      v = int(negExp(.5) * 1544)
+      v = int(negExp(lambdaValue) * 1544)
    return v
 
 
 class Packet:
-   def __init__(self, startTime):
-      self.size = packetSize()
+   def __init__(self, startTime, lambdaValue):
+      self.size = packetSize(lambdaValue)
       self.startTime = startTime
 
    def getSize(self):

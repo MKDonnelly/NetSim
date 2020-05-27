@@ -14,7 +14,7 @@ random.seed(time.time())
 lambdaValue = .1
 
 # Number of hosts
-nHosts = 2
+nHosts = 10
 #############################################################
 
 wClients = []
@@ -31,7 +31,7 @@ for i in range(0, nHosts):
 # when this event is processed
 packetArrivalTime = 0
 # I guess we will iterate for 10,000 packets...
-for i in range(0, 1):
+for i in range(0, 10000):
    # The mean arrival time is negExp(lambda)
    packetArrivalTime += negExp(lambdaValue)
 
@@ -39,7 +39,7 @@ for i in range(0, 1):
    randClient = random.randint(0, nHosts-1)
 
    # Set a packet to arrive using the negExp distribution
-   wClients[1].addEvent(Event(packetArrivalTime, EVENT_PKT_ARRIVAL))
+   wClients[randClient].addEvent(Event(packetArrivalTime, EVENT_PKT_ARRIVAL))
 
 
 # Now start at time 0 and get the first event
@@ -66,14 +66,14 @@ while clientWantsToSend(wClients):
 # Each wlan client will hold the number of data bytes
 # it has received. We can sum them up using the
 # sumOfData function provided
-#bTransmitted = sumOfData(wClients)
+bTransmitted = sumOfData(wClients)
 # Event time is in ms, convert to seconds
-#timeInSeconds = eventTime / 1000
-#throughput = bTransmitted / timeInSeconds
-#print("Throughput (in bits/second): " + str(round(throughput)))
+timeInSeconds = eventTime / 1000
+throughput = bTransmitted / timeInSeconds
+print("Throughput (in bits/second): " + str(round(throughput)))
 
 # According to the assignment, the average network delay
 # is the total delay of all of the hosts divided by
 # the throughput
-#totalDelay = sumOfDelay(wClients)
-#print("Average delay (in seconds): " + str(totalDelay / throughput))
+totalDelay = sumOfDelay(wClients)
+print("Average delay (in seconds): " + str(totalDelay / throughput))

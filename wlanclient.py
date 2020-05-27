@@ -177,8 +177,6 @@ class wClient:
          self.eventList.insert(Event(currentTime + transmissionDelay, \
                                      EVENT_UNBLOCK_CHANNEL))
 
-         # Reset colission counter to 0
-         self.cCounter = 0
 
       elif self.state == STATE_WAIT_ACK:
          # Wait to receive an ACK.
@@ -189,15 +187,22 @@ class wClient:
          if self.waitTime <= 0:
             # Timeout, push the packet to the start of the packet
             # queue and go into the READY state to re-send the packet
-            print("Timeout on client " + str(self.clientIndex) + "!!!")
-#            self.packetQueue.push(self.sentPacket)
-            self.state = STATE_READY
+            self.packetQueue.push(self.sentPacket)
+            self.cCounter += 1
+            self.backoffValue = randomBackoff(self.cCounter)
+            self.state = STATE_BACKOFF
 
       elif self.state == STATE_SEND_ACK:
          if not channelBusy:
             self.sifs -= SENSE_RATE
             if self.sifs <= 0:
                # Send ACK to client
+               # Block channel 
+               channelBusy = 1
+               # Unblock channel after the transmission delay
+               ackTransDelay = ACK_LENGTH / WCHAN_RATE
+               self.eventList.insert(Event(currentTime + ackTransDelay, \
+                                           EVENT_UNBLOCK_CHANNEL))
                self.clientsList[self.ackClient].acceptACK()
                self.state = STATE_READY
 
@@ -216,6 +221,8 @@ class wClient:
    def acceptACK(self):
       # Once we receive an ACK, we enter the STATE_READY state.
       self.state = STATE_READY
+      # Reset colission counter to 0
+      self.cCounter = 0
 
    # This is called when we send a packet from one client to another
    # We provide the other client the index of the sending client in

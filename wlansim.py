@@ -15,6 +15,9 @@ lambdaValue = .1
 
 # Number of hosts
 nHosts = 10
+
+# Total packets to send
+totalPackets = 1000
 #############################################################
 
 wClients = []
@@ -31,7 +34,7 @@ for i in range(0, nHosts):
 # when this event is processed
 packetArrivalTime = 0
 # I guess we will iterate for 10,000 packets...
-for i in range(0, 10000):
+for i in range(0, totalPackets):
    # The mean arrival time is negExp(lambda)
    packetArrivalTime += negExp(lambdaValue)
 
@@ -76,4 +79,4 @@ print("Throughput (in bits/second): " + str(round(throughput)))
 # is the total delay of all of the hosts divided by
 # the throughput
 totalDelay = sumOfDelay(wClients)
-print("Average delay (in seconds): " + str(totalDelay / throughput))
+print("Average delay (in seconds): " + str(totalDelay / totalPackets))

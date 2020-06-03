@@ -10,14 +10,16 @@ random.seed(time.time())
 ###########################################################
 ##############     PARAMETERS USED IN SIMULATION   ########
 ###########################################################
+# User will enter these values
+
 # Rate of packet arrival
-lambdaValue = .9
+lambdaValue = float(input("Enter value for lambda: "))
 
 # Number of hosts
-nHosts = 10
+nHosts = int(input("Enter number of hosts: "))
 
 # Total packets to send
-totalPackets = 10000
+totalPackets = int(input("Enter number of packets: "))
 #############################################################
 
 wClients = []

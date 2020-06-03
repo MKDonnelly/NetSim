@@ -18,8 +18,8 @@ lambdaValue = float(input("Enter value for lambda: "))
 # Number of hosts
 nHosts = int(input("Enter number of hosts: "))
 
-# Total packets to send
-totalPackets = int(input("Enter number of packets: "))
+# Total frames to send
+totalPackets = int(input("Enter number of frames: "))
 #############################################################
 
 wClients = []

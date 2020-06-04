@@ -125,7 +125,7 @@ class wClient:
             # Keep track of how many colissions we have hit
             # so we can adjust the backoff function
             self.cCounter += 1
-            self.backoffValue = randomBackoff(self.cCounter)
+            self.backoffValue = randomBackoff(self.cCounter) + DIFS
 
       elif self.state == STATE_DIFS_WAIT:
          if not channelBusy:
@@ -189,7 +189,7 @@ class wClient:
             # queue and go into the READY state to re-send the packet
             self.packetQueue.push(self.sentPacket)
             self.cCounter += 1
-            self.backoffValue = randomBackoff(self.cCounter)
+            self.backoffValue = randomBackoff(self.cCounter) + DIFS
             self.state = STATE_BACKOFF
 
       elif self.state == STATE_SEND_ACK:
